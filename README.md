@@ -1,7 +1,9 @@
 NOTE
 -----
-This software is not maintained anymore. please feel free to fork. The appropriate build environment is available at 
-https://github.com/gpg4usb/gpg4usb-docker
+This software is not maintained by a professional coder.
+I mostly write bash scripts, batch files, HTML and a little phyton now and then.
+The Linux part is up to date and working as far as i can tell.
+Windows is not Up to date and breaks the DB after launching.
 
 ABOUT
 -----
