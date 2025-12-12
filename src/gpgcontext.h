@@ -47,6 +47,12 @@ public:
     QString name;
     QString email;
     QString fpr;
+    // algorithm metadata (added for GPGME/GnuPG2 ECC support)
+    QString algo;    // e.g. "ed25519", "ECDSA", "RSA"
+    QString curve;   // if ECC, curve name e.g. "cv25519", "nistp256"
+    bool can_encrypt;
+    bool can_sign;
+    bool can_authenticate;
     bool privkey;
     bool expired;
     bool revoked;
