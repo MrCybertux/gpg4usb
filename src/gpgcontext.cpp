@@ -274,6 +274,25 @@ GpgKeyList GpgContext::listKeys()
             gpgkey.name = QString::fromUtf8(key->uids->name);
             gpgkey.email = QString::fromUtf8(key->uids->email);
         }
+
+        /* --- New: read algorithm / curve / capabilities from primary subkey --- */
+        if (key->subkeys) {
+            const char *algon = gpgme_pubkey_algo_name(key->subkeys->pubkey_algo);
+            if (algon)
+                gpgkey.algo = QString::fromUtf8(algon);
+            else
+                gpgkey.algo.clear();
+
+            if (key->subkeys->curve)
+                gpgkey.curve = QString::fromUtf8(key->subkeys->curve);
+            else
+                gpgkey.curve.clear();
+
+            gpgkey.can_encrypt = (key->subkeys->can_encrypt != 0);
+            gpgkey.can_sign = (key->subkeys->can_sign != 0);
+            gpgkey.can_authenticate = (key->subkeys->can_authenticate != 0);
+        }
+
         keys.append(gpgkey);
         gpgme_key_unref(key);
     }
@@ -345,21 +364,21 @@ bool GpgContext::encrypt(QStringList *uidList, const QByteArray &inBuffer, QByte
 
     //If the last parameter isnt 0, a private copy of data is made
     if (mCtx) {
-		err = gpgme_data_new_from_mem(&in, inBuffer.data(), inBuffer.size(), 1);
-		checkErr(err);
+        err = gpgme_data_new_from_mem(&in, inBuffer.data(), inBuffer.size(), 1);
+        checkErr(err);
         if (!err) {
-			err = gpgme_data_new(&out);
-			checkErr(err);
-	        if (!err) {
-				err = gpgme_op_encrypt(mCtx, recipients, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-				checkErr(err);
-				if (!err) {
-					err = readToBuffer(out, outBuffer);
-					checkErr(err);
-				}
-			}
-		}
-	}
+            err = gpgme_data_new(&out);
+            checkErr(err);
+            if (!err) {
+                err = gpgme_op_encrypt(mCtx, recipients, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+                checkErr(err);
+                if (!err) {
+                    err = readToBuffer(out, outBuffer);
+                    checkErr(err);
+                }
+            }
+        }
+    }
     /* unref all keys */
     for (int i = 0; i <= uidList->count(); i++) {
         gpgme_key_unref(recipients[i]);
@@ -485,8 +504,8 @@ gpgme_error_t GpgContext::passphrase(const char *uid_hint,
     QString gpgHint = QString::fromUtf8(uid_hint);
     bool result;
 #ifdef _WIN32
-	DWORD written;
-	HANDLE hd = (HANDLE)fd;
+    DWORD written;
+    HANDLE hd = (HANDLE)fd;
 #endif
 
     if (last_was_bad) {
@@ -530,11 +549,11 @@ gpgme_error_t GpgContext::passphrase(const char *uid_hint,
     }
 #else
     WriteFile(hd, "\n", 1, &written, 0);
-    
+
     /* program will hang on cancel if hd not closed */
     if(!result) {
-			CloseHandle(hd);
-	}
+            CloseHandle(hd);
+        }
 #endif
 
     return returnValue;
@@ -827,9 +846,4 @@ QString GpgContext::getGpgmeVersion() {
      return QString(gpgme_check_version(NULL));
 }
 
-}
-
-
-
-
-
+} // namespace GpgME
